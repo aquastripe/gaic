@@ -112,14 +112,16 @@ def test():
         for idx in range(0, len(bboxs['xmin'])):
             roi.append((0, bboxs['xmin'][idx], bboxs['ymin'][idx], bboxs['xmax'][idx], bboxs['ymax'][idx]))
         roi = torch.tensor(roi).float()
+        mos = torch.tensor(MOS)
 
         if cuda:
             image = image.to('cuda')
             roi = roi.to('cuda')
+            mos = mos.to('cuda')
 
         # t0 = time.time()
         out = net(image, roi)
-        loss = torch.nn.SmoothL1Loss(reduction='elementwise_mean')(out.squeeze(), torch.Tensor(MOS))
+        loss = torch.nn.SmoothL1Loss(reduction='elementwise_mean')(out.squeeze(), mos)
         total_loss += loss.item()
         avg_loss = total_loss / (id + 1)
 
