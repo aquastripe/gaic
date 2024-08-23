@@ -170,14 +170,13 @@ def train():
             for idx in random_ID[:64]:
                 roi.append((0, bboxs['xmin'][idx], bboxs['ymin'][idx], bboxs['xmax'][idx], bboxs['ymax'][idx]))
                 MOS.append(sample['MOS'][idx])
+            roi = torch.tensor(roi)
+            MOS = torch.tensor(MOS)
 
             if cuda:
-                image = Variable(image.cuda())
-                roi = Variable(torch.Tensor(roi))
-                MOS = torch.Tensor(MOS)
-            else:
-                image = Variable(image)
-                roi = Variable(roi)
+                image = image.to('cuda')
+                roi = roi.to('cuda')
+                MOS = MOS.to('cuda')
 
             # forward
 
