@@ -111,7 +111,7 @@ def test():
         roi = []
         for idx in range(0, len(bboxs['xmin'])):
             roi.append((0, bboxs['xmin'][idx], bboxs['ymin'][idx], bboxs['xmax'][idx], bboxs['ymax'][idx]))
-        roi = torch.tensor(roi)
+        roi = torch.tensor(roi).float()
 
         if cuda:
             image = image.to('cuda')
@@ -192,7 +192,7 @@ def train():
             for idx in random_ID[:64]:
                 roi.append((0, bboxs['xmin'][idx], bboxs['ymin'][idx], bboxs['xmax'][idx], bboxs['ymax'][idx]))
                 MOS.append(sample['MOS'][idx])
-            roi = torch.tensor(roi)
+            roi = torch.tensor(roi).float()
             MOS = torch.tensor(MOS)
 
             if cuda:
