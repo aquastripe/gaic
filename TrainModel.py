@@ -180,7 +180,6 @@ def train():
     for epoch in range(0, 80):
         total_loss = 0
         for id, sample in enumerate(data_loader_train):
-
             image = sample['image']
             bboxs = sample['bbox']
 

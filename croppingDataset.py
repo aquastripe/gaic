@@ -3,6 +3,7 @@ import os
 
 import cv2
 import numpy as np
+import torch
 import torch.utils.data as data
 
 from augmentations import CropAugmentation
@@ -46,6 +47,7 @@ class TransformFunction(object):
             MOS.append((float(annotation[-1]) - MOS_MEAN) / MOS_STD)
 
         resized_image = resized_image.transpose((2, 0, 1))
+        resized_image = torch.from_numpy(resized_image)
         return {'image': resized_image, 'bbox': transformed_bbox, 'MOS': MOS}
 
 
