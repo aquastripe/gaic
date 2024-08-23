@@ -87,6 +87,7 @@ if cuda:
 optimizer = optim.Adam(net.parameters(), lr=args.lr)
 
 
+@torch.no_grad()
 def test():
     net.eval()
     acc4_5 = []
@@ -155,12 +156,10 @@ def test():
             wacc4_5[k] += temp_wacc_4_5 / (k + 1.0)
             wacc4_10[k] += temp_wacc_4_10 / (k + 1.0)
 
-        MOS_arr = []
-        out = torch.squeeze(out).cpu().detach().numpy()
-        for k in range(len(MOS)):
-            MOS_arr.append(MOS[k].cpu().numpy()[0])
-        srcc.append(spearmanr(MOS_arr, out)[0])
-        pcc.append(pearsonr(MOS_arr, out)[0])
+        MOS_arr = MOS.cpu().numpy()
+        out = torch.squeeze(out).cpu().numpy()
+        srcc.append(spearmanr(MOS_arr, out).statistic)
+        pcc.append(pearsonr(MOS_arr, out).statistic)
 
         # t1 = time.time()
 
