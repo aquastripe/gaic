@@ -10,5 +10,5 @@ nvcc -c -o rod_align_kernel.cu.o rod_align_kernel.cu -x cu -Xcompiler -fPIC -arc
 
 cd ../
 # Export CUDA_HOME. And build and install the library.
-export CUDA_HOME=/usr/local/cuda-10.0 && python setup.py install
+python setup.py install
 
