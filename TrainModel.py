@@ -58,7 +58,6 @@ net = build_crop_model(scale=args.scale, alignsize=args.align_size, reddim=args.
 
 
 if cuda:
-    net = torch.nn.DataParallel(net,device_ids=[0])
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     #cudnn.benchmark = True
