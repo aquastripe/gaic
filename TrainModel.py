@@ -3,12 +3,14 @@ import math
 import os
 import random
 import sys
+from collections import defaultdict
 
 import numpy as np
 import torch
 import torch.optim as optim
 import torch.utils.data as data
 from scipy.stats import spearmanr, pearsonr
+from torch.utils.data import DataLoader
 
 from croppingDataset import GAICD
 from croppingModel import build_crop_model
@@ -45,12 +47,34 @@ if not os.path.exists(args.save_folder):
 
 cuda = True if torch.cuda.is_available() else False
 
-data_loader_train = data.DataLoader(
-    GAICD(image_size=args.image_size, dataset_dir=args.dataset_root, set='train', augmentation=args.augmentation),
-    batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True, worker_init_fn=random.seed(SEED))
 
-data_loader_test = data.DataLoader(GAICD(image_size=args.image_size, dataset_dir=args.dataset_root, set='test'),
-                                   batch_size=args.batch_size, num_workers=args.num_workers, shuffle=False)
+def collate_gaicd(batch):
+    images = []
+    bbox = defaultdict(list)
+    mos = []
+    for item in batch:
+        images.append(item['image'])
+        bbox['xmin'] += item['bbox']['xmin']
+        bbox['xmax'] += item['bbox']['xmax']
+        bbox['ymin'] += item['bbox']['ymin']
+        bbox['ymax'] += item['bbox']['ymax']
+        mos += item['MOS']
+    images = torch.stack(images)
+    results = {
+        'image': images,
+        'bbox': bbox,
+        'MOS': mos,
+    }
+    return results
+
+
+train_set = GAICD(image_size=args.image_size, dataset_dir=args.dataset_root, set='train',
+                  augmentation=args.augmentation)
+data_loader_train = DataLoader(train_set, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True,
+                               worker_init_fn=random.seed(SEED), persistent_workers=True, collate_fn=collate_gaicd)
+test_set = GAICD(image_size=args.image_size, dataset_dir=args.dataset_root, set='test')
+data_loader_test = DataLoader(test_set, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=False,
+                              persistent_workers=True, collate_fn=collate_gaicd)
 
 net = build_crop_model(scale=args.scale, alignsize=args.align_size, reddim=args.reduced_dim, loadweight=True,
                        model=args.base_model, downsample=args.downsample)
