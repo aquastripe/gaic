@@ -8,7 +8,6 @@ from collections import defaultdict
 import numpy as np
 import torch
 import torch.optim as optim
-import torch.utils.data as data
 from scipy.stats import spearmanr, pearsonr
 from torch.utils.data import DataLoader
 
