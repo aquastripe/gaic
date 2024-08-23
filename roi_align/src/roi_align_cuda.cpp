@@ -1,4 +1,3 @@
-#include <THC/THC.h>
 #include <math.h>
 #include <torch/extension.h>
 #include "roi_align_kernel.h"

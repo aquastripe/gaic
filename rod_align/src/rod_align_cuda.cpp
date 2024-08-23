@@ -1,4 +1,3 @@
-#include <THC/THC.h>
 #include <math.h>
 #include "rod_align_kernel.h"
 #include "rod_align_cuda.h"

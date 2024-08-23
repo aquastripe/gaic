@@ -1,6 +1,8 @@
 #ifndef _ROI_ALIGN_KERNEL
 #define _ROI_ALIGN_KERNEL
 
+#include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/CUDAEvent.h>
 
 __global__ void ROIAlignForward(const int nthreads, const float* bottom_data,
     const float spatial_scale, const int height, const int width,

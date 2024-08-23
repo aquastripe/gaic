@@ -1,4 +1,3 @@
-#include <TH/TH.h>
 #include <math.h>
 #include <omp.h>
 #include "roi_align.h"

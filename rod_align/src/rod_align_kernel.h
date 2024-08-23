@@ -1,7 +1,8 @@
 #ifndef _ROD_ALIGN_KERNEL
 #define _ROD_ALIGN_KERNEL
 
-#include <THC/THC.h>
+#include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/CUDAEvent.h>
 
 __global__ void RODAlignForward(const int nthreads, const float* bottom_data,
     const float spatial_scale, const int height, const int width,
