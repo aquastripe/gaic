@@ -1,3 +1,4 @@
+from tabulate import tabulate
 import argparse
 import math
 import os
@@ -141,10 +142,10 @@ def test(model, data_loader_test):
 
         # print('timer: %.4f sec.' % (t1 - t0))
     for k in range(4):
-        acc4_5[k] = acc4_5[k] / 200.0
-        acc4_10[k] = acc4_10[k] / 200.0
-        wacc4_5[k] = wacc4_5[k] / 200.0
-        wacc4_10[k] = wacc4_10[k] / 200.0
+        acc4_5[k] = acc4_5[k] / 2.0
+        acc4_10[k] = acc4_10[k] / 2.0
+        wacc4_5[k] = wacc4_5[k] / 2.0
+        wacc4_10[k] = wacc4_10[k] / 2.0
 
     avg_srcc = sum(srcc) / 200.0
     avg_pcc = sum(pcc) / 200.0
@@ -156,49 +157,66 @@ def train(model, data_loader_train, data_loader_test, optimizer, args):
     model.train()
     for epoch in range(0, 80):
         total_loss = 0
-        for id, sample in enumerate(data_loader_train):
-            image = sample['image']
-            bboxs = sample['bbox']
+        with tqdm(data_loader_train) as p_bar:
+            for id, sample in enumerate(p_bar):
+                image = sample['image']
+                bboxs = sample['bbox']
 
-            roi = []
-            MOS = []
+                roi = []
+                MOS = []
 
-            random_ID = list(range(0, len(bboxs['xmin'])))
-            random.shuffle(random_ID)
+                random_ID = list(range(0, len(bboxs['xmin'])))
+                random.shuffle(random_ID)
 
-            for idx in random_ID[:64]:
-                roi.append((0, bboxs['xmin'][idx], bboxs['ymin'][idx], bboxs['xmax'][idx], bboxs['ymax'][idx]))
-                MOS.append(sample['MOS'][idx])
-            roi = torch.tensor(roi).float()
-            MOS = torch.tensor(MOS)
+                for idx in random_ID[:64]:
+                    roi.append((0, bboxs['xmin'][idx], bboxs['ymin'][idx], bboxs['xmax'][idx], bboxs['ymax'][idx]))
+                    MOS.append(sample['MOS'][idx])
+                roi = torch.tensor(roi).float()
+                MOS = torch.tensor(MOS)
 
-            if torch.cuda.is_available():
-                image = image.to('cuda')
-                roi = roi.to('cuda')
-                MOS = MOS.to('cuda')
+                if torch.cuda.is_available():
+                    image = image.to('cuda')
+                    roi = roi.to('cuda')
+                    MOS = MOS.to('cuda')
 
-            # forward
-            out = model(image, roi)
-            loss = torch.nn.SmoothL1Loss(reduction='mean')(out.squeeze(), MOS)
-            total_loss += loss.item()
-            avg_loss = total_loss / (id + 1)
+                # forward
+                out = model(image, roi)
+                loss = torch.nn.SmoothL1Loss(reduction='mean')(out.squeeze(), MOS)
+                total_loss += loss.item()
+                avg_loss = total_loss / (id + 1)
 
-            # backprop
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+                # backprop
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
-            sys.stdout.write(
-                '\r[Epoch %d/%d] [Batch %d/%d] [Train Loss: %.4f]' % (epoch, 79, id, len(data_loader_train), avg_loss))
+                p_bar.set_postfix({
+                    'Epoch': epoch,
+                    'Iteration': id,
+                    'Train Loss': avg_loss,
+                })
 
         acc4_5, acc4_10, avg_srcc, avg_pcc, test_avg_loss, wacc4_5, wacc4_10 = test(model, data_loader_test)
-        sys.stdout.write(
-            '[Test Loss: %.4f] [%.3f, %.3f, %.3f, %.3f] [%.3f, %.3f, %.3f, %.3f] [SRCC: %.3f] [PCC: %.3f]\n' % (
-                test_avg_loss, acc4_5[0], acc4_5[1], acc4_5[2], acc4_5[3], acc4_10[0], acc4_10[1], acc4_10[2],
-                acc4_10[3],
-                avg_srcc, avg_pcc))
-        sys.stdout.write('[%.3f, %.3f, %.3f, %.3f] [%.3f, %.3f, %.3f, %.3f]\n' % (
-            wacc4_5[0], wacc4_5[1], wacc4_5[2], wacc4_5[3], wacc4_10[0], wacc4_10[1], wacc4_10[2], wacc4_10[3]))
+        results = (list(map(lambda x: f'{x:.1f}', [*acc4_5, *acc4_10])) +
+                   list(map(lambda x: f'{x:.3f}', [avg_srcc, avg_pcc, test_avg_loss])))
+        table = tabulate([results],
+                         headers=[
+                             'Acc 1/5', 'Acc 2/5', 'Acc 3/5', 'Acc 4/5',
+                             'Acc 1/10', 'Acc 2/10', 'Acc 3/10', 'Acc 4/10',
+                             'SRCC', 'PLCC', 'Loss'
+                         ],
+                         tablefmt='orgtbl')
+        sys.stdout.write(table + '\n')
+
+        results = list(map(lambda x: f'{x:.1f}', [*wacc4_5, *wacc4_10]))
+        table = tabulate([results],
+                         headers=[
+                             'WAcc 1/5', 'WAcc 2/5', 'WAcc 3/5', 'WAcc 4/5',
+                             'WAcc 1/10', 'WAcc 2/10', 'WAcc 3/10', 'WAcc 4/10',
+                         ],
+                         tablefmt='orgtbl')
+        sys.stdout.write(table + '\n')
+
         file_path = f'{args.save_folder}/{epoch:02d}_{avg_srcc:.3f}.pth'
         torch.save(model.state_dict(), file_path)
 
@@ -206,7 +224,7 @@ def train(model, data_loader_train, data_loader_test, optimizer, args):
 def main():
     args = parse_args()
     folder_name = (f'downsample_{args.downsample}-{args.scale}-Aug_{args.augmentation}-Align_{args.align_size}-'
-                f'Cdim_{args.reduced_dim}')
+                   f'Cdim_{args.reduced_dim}')
     if args.no_rod:
         folder_name += '-no_rod'
 
@@ -229,7 +247,6 @@ def main():
     if torch.cuda.is_available():
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
-        # cudnn.benchmark = True
         net = net.cuda()
 
     optimizer = optim.Adam(net.parameters(), lr=args.lr)
