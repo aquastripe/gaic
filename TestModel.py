@@ -61,7 +61,7 @@ def main():
           '[{:.3f}, {:.3f}, {:.3f}, {:.3f}] '
           '[{:.3f}, {:.3f}, {:.3f}, {:.3f}] '
           '[SRCC: {:.3f}] [PCC: {:.3f}]'.format(test_avg_loss, *acc4_5, *acc4_10, avg_srcc, avg_pcc))
-    print('[{:.3f}, {:.3f}, {:.3f}, {:.3f}] [{:.3f}, {:.3f}, {:.3f}, {:.3f}]'.format(*wacc4_5, wacc4_10))
+    print('[{:.3f}, {:.3f}, {:.3f}, {:.3f}] [{:.3f}, {:.3f}, {:.3f}, {:.3f}]'.format(*wacc4_5, *wacc4_10))
 
 
 if __name__ == '__main__':
