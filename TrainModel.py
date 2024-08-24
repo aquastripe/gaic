@@ -10,6 +10,7 @@ import torch
 import torch.optim as optim
 from scipy.stats import spearmanr, pearsonr
 from torch.utils.data import DataLoader
+from tqdm.rich import tqdm
 
 from croppingDataset import GAICD
 from croppingModel import build_crop_model
@@ -78,7 +79,7 @@ def test(model, data_loader_test):
         wacc4_5.append(0)
         wacc4_10.append(0)
 
-    for id, sample in enumerate(data_loader_test):
+    for id, sample in enumerate(tqdm(data_loader_test)):
         image = sample['image']
         bboxs = sample['bbox']
         MOS = sample['MOS']
