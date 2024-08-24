@@ -224,11 +224,8 @@ def train():
                 avg_srcc, avg_pcc))
         sys.stdout.write('[%.3f, %.3f, %.3f, %.3f] [%.3f, %.3f, %.3f, %.3f]\n' % (
             wacc4_5[0], wacc4_5[1], wacc4_5[2], wacc4_5[3], wacc4_10[0], wacc4_10[1], wacc4_10[2], wacc4_10[3]))
-        torch.save(net.state_dict(),
-                   args.save_folder + '/' + repr(epoch) + '_%.3f_%.3f_%.3f_%.3f_%.3f_%.3f_%.3f_%.3f_%.3f_%.3f' % (
-                       acc4_5[0], acc4_5[1], acc4_5[2], acc4_5[3], acc4_10[0], acc4_10[1], acc4_10[2], acc4_10[3],
-                       avg_srcc,
-                       avg_pcc) + '.pth')
+        file_path = f'{args.save_folder}/{epoch:02d}_{avg_srcc:.3f}.pth'
+        torch.save(net.state_dict(), file_path)
 
 
 if __name__ == '__main__':
