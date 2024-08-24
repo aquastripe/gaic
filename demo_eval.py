@@ -58,8 +58,8 @@ def output_file_name(input_path, idx):
 def test():
     for epoch in range(0,1):
 
-        net = build_crop_model(scale='multi',#scale='single', 
-                               alignsize=9, reddim=8, loadweight=False, model='mobilenetv2',downsample=4)
+        net = build_crop_model(scale='multi', alignsize=9, reddim=8, loadweight=False, model='mobilenetv2',
+                               downsample=4)
         net.load_state_dict(torch.load(args.net_path))
         net.eval()
 

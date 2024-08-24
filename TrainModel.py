@@ -25,6 +25,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Grid anchor based image cropping')
     parser.add_argument('--dataset_root', default='dataset/GAIC/', help='Dataset root directory path')
     parser.add_argument('--base_model', default='mobilenetv2', help='Pretrained base model')
+    parser.add_argument('--no_rod', action='store_true', default=False, help='No RoD Align')
     parser.add_argument('--scale', default='multi', type=str, help='choose single or multi scale')
     parser.add_argument('--downsample', default=4, type=int, help='downsample time')
     parser.add_argument('--augmentation', default=1, type=int, help='choose single or multi scale')
@@ -97,7 +98,7 @@ def test(model, data_loader_test):
 
         # t0 = time.time()
         out = model(image, roi)
-        loss = torch.nn.SmoothL1Loss(reduction='elementwise_mean')(out.squeeze(), MOS)
+        loss = torch.nn.SmoothL1Loss(reduction='mean')(out.squeeze(), MOS)
         total_loss += loss.item()
         avg_loss = total_loss / (id + 1)
 
@@ -178,7 +179,7 @@ def train(model, data_loader_train, data_loader_test, optimizer, args):
 
             # forward
             out = model(image, roi)
-            loss = torch.nn.SmoothL1Loss(reduction='elementwise_mean')(out.squeeze(), MOS)
+            loss = torch.nn.SmoothL1Loss(reduction='mean')(out.squeeze(), MOS)
             total_loss += loss.item()
             avg_loss = total_loss / (id + 1)
 
@@ -204,9 +205,12 @@ def train(model, data_loader_train, data_loader_test, optimizer, args):
 
 def main():
     args = parse_args()
-    args.save_folder = args.save_folder + args.base_model + '/' + 'downsample' + str(
-        args.downsample) + '_' + args.scale + '_Aug' + str(args.augmentation) + '_Align' + str(
-        args.align_size) + '_Cdim' + str(args.reduced_dim)
+    folder_name = (f'downsample_{args.downsample}-{args.scale}-Aug_{args.augmentation}-Align_{args.align_size}-'
+                f'Cdim_{args.reduced_dim}')
+    if args.no_rod:
+        folder_name += '-no_rod'
+
+    args.save_folder = args.save_folder + args.base_model + '/' + folder_name
 
     if not os.path.exists(args.save_folder):
         os.makedirs(args.save_folder)
@@ -220,7 +224,7 @@ def main():
                                   persistent_workers=True, collate_fn=collate_gaicd)
 
     net = build_crop_model(scale=args.scale, alignsize=args.align_size, reddim=args.reduced_dim, loadweight=True,
-                           model=args.base_model, downsample=args.downsample)
+                           model=args.base_model, downsample=args.downsample, no_rod=args.no_rod)
 
     if torch.cuda.is_available():
         torch.backends.cudnn.deterministic = True
